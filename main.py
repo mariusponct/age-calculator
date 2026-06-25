@@ -104,7 +104,7 @@ PAGE = """
       display: none;
     }
     .stat {
-      background: rgba(0,0,0,0.2); border-radius: 12px; padding: 1rem;
+      background: rgba(0,0,0,0.5); border-radius: 12px; padding: 1rem;
       text-align: center;
     }
     .stat .num { font-size: 1.5rem; font-weight: 700; }
