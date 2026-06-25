@@ -46,18 +46,22 @@ jobs:
         id: ecr
         uses: aws-actions/amazon-ecr-login@v2
 
+      # Sets up the buildx builder so `docker buildx build --platform` works
+      # reliably on the runner (plain `docker build --platform` can fail).
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Build and push image (linux/amd64)
         env:
           REGISTRY: ${{ steps.ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
           # --platform linux/amd64 is required: the t3.small nodes are x86.
-          docker build --platform linux/amd64 \
+          # buildx pushes directly with --push (no separate docker push needed).
+          docker buildx build --platform linux/amd64 \
             -t "$REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" \
             -t "$REGISTRY/$ECR_REPOSITORY:latest" \
-            .
-          docker push "$REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
-          docker push "$REGISTRY/$ECR_REPOSITORY:latest"
+            --push .
 
       - name: Update kubeconfig
         run: aws eks update-kubeconfig --name "$EKS_CLUSTER" --region "$AWS_REGION"
