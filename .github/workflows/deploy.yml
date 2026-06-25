@@ -1,0 +1,77 @@
+# .github/workflows/deploy.yml
+# Build -> push to ECR -> roll out to the ageapp pods on EKS.
+# Auth is via OIDC (no static AWS keys). The IAM role, OIDC provider, and EKS
+# access entry are created by terraform/13-github-actions.tf.
+
+name: Build and deploy to EKS
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "**.md"
+      - ".gitignore"
+      - ".dockerignore"
+      - ".idea/**"
+  workflow_dispatch: {} # lets you trigger a deploy manually from the Actions tab
+
+permissions:
+  id-token: write # required to request the OIDC token
+  contents: read
+
+env:
+  AWS_REGION: eu-central-1
+  ECR_REPOSITORY: age-calculator-repo
+  EKS_CLUSTER: staging-demo
+  K8S_NAMESPACE: ageapp
+  DEPLOYMENT: ageapp
+  # Account IDs are not secret; inline is fine. Move to a repo variable if you
+  # prefer: role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+  ROLE_ARN: arn:aws:iam::635649352418:role/github-actions-ageapp-deploy
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push image (linux/amd64)
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          # --platform linux/amd64 is required: the t3.small nodes are x86.
+          docker build --platform linux/amd64 \
+            -t "$REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" \
+            -t "$REGISTRY/$ECR_REPOSITORY:latest" \
+            .
+          docker push "$REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+          docker push "$REGISTRY/$ECR_REPOSITORY:latest"
+
+      - name: Update kubeconfig
+        run: aws eks update-kubeconfig --name "$EKS_CLUSTER" --region "$AWS_REGION"
+
+      - name: Roll out the new image
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          # "*=" updates every container in the deployment, so we don't need to
+          # hardcode the container name. Tagging by commit SHA guarantees the
+          # rollout actually triggers (a reused tag would be a no-op).
+          kubectl set image deployment/"$DEPLOYMENT" \
+            "*=$REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" \
+            -n "$K8S_NAMESPACE"
+          kubectl rollout status deployment/"$DEPLOYMENT" \
+            -n "$K8S_NAMESPACE" --timeout=120s
