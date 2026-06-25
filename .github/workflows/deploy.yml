@@ -57,10 +57,11 @@ jobs:
           IMAGE_TAG: ${{ github.sha }}
         run: |
           # --platform linux/amd64 is required: the t3.small nodes are x86.
-          # buildx pushes directly with --push (no separate docker push needed).
+          # Only the immutable SHA tag is pushed: the ECR repo uses immutable
+          # tags, so a moving ":latest" can't be overwritten (and isn't needed —
+          # the rollout below deploys the exact SHA).
           docker buildx build --platform linux/amd64 \
             -t "$REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" \
-            -t "$REGISTRY/$ECR_REPOSITORY:latest" \
             --push .
 
       - name: Update kubeconfig
