@@ -112,12 +112,12 @@ PAGE = """
     .bday { margin-top: 1.2rem; text-align: center; opacity: .9;
             display: none; }
     .error { color: #ffe4e6; margin-top: 1rem; display: none;
-             background: rgba(0,0,0,0.25); padding: .7rem; border-radius: 10px; }
+             background: rgba(255,0,0,0.25); padding: .7rem; border-radius: 10px; }
   </style>
 </head>
 <body>
   <div class="card">
-    <h1>🎂 Age Calculator TEST</h1>
+    <h1>🎂 Age Calculator</h1>
     <p class="sub">Pick your birth date.</p>
 
     <label for="dob">Date of birth</label>
