@@ -72,7 +72,7 @@ PAGE = """
       font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
       margin: 0; min-height: 100vh; display: grid; place-items: center;
       padding: 1.5rem;
-      background: linear-gradient(135deg, #475569, #94a3b8); color: #fff;
+      background: linear-gradient(135deg, #7f1d1d, #dc2626); color: #fff;
     }
     .card {
       background: rgba(255,255,255,0.12); backdrop-filter: blur(10px);
@@ -112,7 +112,7 @@ PAGE = """
     .bday { margin-top: 1.2rem; text-align: center; opacity: .9;
             display: none; }
     .error { color: #ffe4e6; margin-top: 1rem; display: none;
-             background: rgba(255,0,0,0.25); padding: .7rem; border-radius: 10px; }
+             background: rgba(0,0,0,0.25); padding: .7rem; border-radius: 10px; }
   </style>
 </head>
 <body>
