@@ -72,7 +72,7 @@ PAGE = """
       font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
       margin: 0; min-height: 100vh; display: grid; place-items: center;
       padding: 1.5rem;
-      background: linear-gradient(135deg, #7f1d1d, #dc2626); color: #fff;
+      background: linear-gradient(135deg, #ef4444, #f87171); color: #fff;
     }
     .card {
       background: rgba(255,255,255,0.12); backdrop-filter: blur(10px);
